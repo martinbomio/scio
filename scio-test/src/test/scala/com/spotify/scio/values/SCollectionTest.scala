@@ -344,6 +344,17 @@ class SCollectionTest extends PipelineSpec {
       p2(1).count.map(round) should containSingleValue (300L)
       p2(2).count.map(round) should containSingleValue (500L)
 
+      val rnd = new scala.util.Random(11).nextDouble _
+      val p3 = sc.parallelize(0 to 1000).randomSplit(Array(0.3, 0.7), rGen = rnd)
+      val p4 = sc.parallelize(0 to 1000).randomSplit(Array(0.2, 0.3, 0.5), rGen = rnd)
+      p3.length shouldBe 2
+      p4.length shouldBe 3
+      p3(0).count.map(round) should containSingleValue (300L)
+      p3(1).count.map(round) should containSingleValue (700L)
+      p4(0).count.map(round) should containSingleValue (200L)
+      p4(1).count.map(round) should containSingleValue (300L)
+      p4(2).count.map(round) should containSingleValue (500L)
+
       val (pa, pb) = sc.parallelize(0 to 1000).randomSplit(0.3)
       val (pc, pd, pe) = sc.parallelize(0 to 1000).randomSplit(0.2, 0.3)
       pa.count.map(round) should containSingleValue (300L)

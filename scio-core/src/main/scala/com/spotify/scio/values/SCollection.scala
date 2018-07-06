@@ -453,10 +453,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Randomly splits this SCollection with the provided weights.
    *
    * @param weights weights for splits, will be normalized if they don't sum to 1
+   * @param rGen a random double generation function.
    * @return split SCollections in an array
    * @group transform
    */
-  def randomSplit(weights: Array[Double]): Array[SCollection[T]] = {
+  def randomSplit(weights: Array[Double],
+                  rGen: () => Double = ThreadLocalRandom.current().nextDouble)
+  : Array[SCollection[T]] = {
     val sum = weights.sum
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
     val m = TreeMap(normalizedCumWeights.zipWithIndex: _*)  // Map[lower bound, split]
@@ -465,7 +468,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val (head, tail) = this
       .withSideOutputs(sides: _*)
       .flatMap { (x, c) =>
-        val i = m.to(ThreadLocalRandom.current().nextDouble()).last._2
+        val i = m.to(rGen()).last._2
         if (i == 0) {
           Seq(x)  // Main output
         } else {
